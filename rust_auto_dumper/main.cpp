@@ -135,9 +135,9 @@ int main() {
 }
 
 void dump_to_github() {
-	update_readme();
 	auto output = exec("dump.bat");
 	if (output.find("Done!") != std::string::npos) {
+		update_readme();
 		exec("script.sh");
 	}
 	else {
