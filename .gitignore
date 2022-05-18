@@ -1,5 +1,6 @@
 .vs/
 rust_auto_dumper/x64/Debug/
 rust_auto_dumper/x64/Release/
+rust_auto_dumper/x64/dump/
 x64/Debug/
 x64/Release/
