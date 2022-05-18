@@ -1,0 +1,5 @@
+.vs/
+rust_auto_dumper/x64/Debug/
+rust_auto_dumper/x64/Release/
+x64/Debug/
+x64/Release/
