@@ -49,8 +49,8 @@ bool update() {
 		console::heck(failure, local_build.c_str());
 		console::print(normal, "Remote build: ", false);
 		console::heck(success, remote_build.c_str());
-		auto response = exec("dump.bat");
-		if (response.find("Done!") != std::string::npos) {
+		auto response = exec("update_rust.bat");
+		if (response.find("Success!") != std::string::npos) {
 			updated = true;
 			local_build = remote_build;
 
