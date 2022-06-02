@@ -1,6 +1,9 @@
 .vs/
 rust_auto_dumper/x64/Debug/
 rust_auto_dumper/x64/Release/
+rust_auto_dumper/x64/Relase_Staging/
 rust_auto_dumper/dump/
 x64/Debug/
 x64/Release/
+x64/Relase_Staging/
+

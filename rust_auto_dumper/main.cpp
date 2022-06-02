@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <fstream>
 #include <unordered_map>
+#include <format>
 
 #include <json.hpp>
 #include "xxx.h"
@@ -49,12 +50,20 @@ bool update() {
 		console::heck(failure, local_build.c_str());
 		console::print(normal, "Remote build: ", false);
 		console::heck(success, remote_build.c_str());
+#ifndef STAGING
 		auto response = exec("update_rust.bat");
+#else
+		auto response = exec("update_rust-staging.bat");
+#endif
 		if (response.find("Success!") != std::string::npos) {
 			updated = true;
 			local_build = remote_build;
 
+#ifndef STAGING
 			std::ofstream outstream("buildid.txt");
+#else
+			std::ofstream outstream("buildid-staging.txt");
+#endif
 			outstream << local_build;
 			outstream.close();
 		}
@@ -77,7 +86,11 @@ void update_check() {
 
 	try {
 		static std::regex regexp(R"(^\s\s\s\"public\"\s+\{\s+\"buildid\"\s+\"(\d+)\")");
+#ifndef STAGING
 		auto output = exec("checkver.bat");
+#else
+		auto output = exec("checkver-staging.bat");
+#endif
 
 		std::smatch match;
 		const bool found_match = std::regex_search(output, match, regexp);
@@ -108,9 +121,15 @@ void update_check() {
 }
 
 int main() {
-	/*update_readme();
-	return 0;*/
+#ifdef _DEBUG
+	update_readme();
+	return 0;
+#endif
+#ifndef STAGING
 	std::filesystem::path f{ "buildid.txt" };
+#else
+	std::filesystem::path f{ "buildid-staging.txt" };
+#endif
 	if (exists(f)) {
 		std::ifstream filein(f);
 		filein >> local_build;
@@ -135,10 +154,18 @@ int main() {
 }
 
 void dump_to_github() {
+#ifndef STAGING
 	auto output = exec("dump.bat");
+#else
+	auto output = exec("dump-staging.bat");
+#endif
 	if (output.find("Done!") != std::string::npos) {
 		update_readme();
+#ifndef STAGING
 		exec("script.sh");
+#else
+		exec("script-staging.sh");
+#endif
 	}
 	else {
 		console::print_failure(true, "Dumping failed! %s", output.c_str());
@@ -233,7 +260,11 @@ void update_readme() {
 
 	// fetching values we're interested in
 	if (true) {
+#ifndef STAGING
 		std::ifstream script_stream("dump\\script.json");
+#else
+		std::ifstream script_stream("dump_staging\\script.json");
+#endif
 		try {
 			json j = json::parse(script_stream);
 			auto ScriptMetadata = j.at("ScriptMetadata");
@@ -259,7 +290,11 @@ void update_readme() {
 	}
 
 	// dump.cs
+#ifndef STAGING
 	std::ifstream dump("dump\\dump.cs");
+#else
+	std::ifstream dump("dump_staging\\dump.cs");
+#endif
 	std::string dumpData = slurp(dump);
 
 	// getting rid of excess data
@@ -275,7 +310,7 @@ void update_readme() {
 	basic_scan("public class BasePlayer : BaseCombatEntity, LootPanel.IHasLootPanel", dumpData, baseplayer_offsets);
 
 	// BaseEntity
-	basic_scan("public class BaseEntity : BaseNetworkable, IProvider, ILerpTarget, IPrefabPreProcess", dumpData, baseentity_offsets);
+	basic_scan("public class BaseEntity : BaseNetworkable, IProvider", dumpData, baseentity_offsets);
 
 	// BaseCombatEntity
 	basic_scan("public class BaseCombatEntity : BaseEntity", dumpData, BaseCombatEntity_offsets);
@@ -367,7 +402,7 @@ void update_readme() {
 		assert(x.second.size());
 		std::string n = x.first;
 		std::replace(n.begin(), n.end(), '.', '_'); // replacing . with _
-		final_j[n] = std::stoul(x.second, nullptr, 16);
+		final_j[n] = std::atoi(x.second.c_str());
 	}
 
 	final_j["BasePlayer"] = baseplayer_j;
@@ -383,7 +418,11 @@ void update_readme() {
 	final_j["Model"] = Model_j;
 	final_j["BaseProjectile"] = Baseprojectile_j;
 
+#ifndef STAGING
 	std::ofstream o("dump\\rust.json");
+#else
+	std::ofstream o("dump_staging\\rust.json");
+#endif
 	o << std::setw(4) << final_j << std::endl;
 
 	// create header file
@@ -392,7 +431,11 @@ void update_readme() {
 	csharp().dump(final_offsets, script_offsets);
 
 	// modifying README
+#ifndef STAGING
 	std::ifstream instream("dump\\README.md");
+#else
+	std::ifstream instream("dump_staging\\README.md");
+#endif
 	if (instream.is_open()) {
 		std::string readme = slurp(instream);
 		instream.close();
@@ -400,7 +443,11 @@ void update_readme() {
 		std::regex updexp(R"((\#\#\#\sLast\sUpdate)(\s[\w :-]+))");
 		readme = std::regex_replace(readme, updexp, "$1 " + get_current_time());
 
+#ifndef STAGING
 		std::ofstream ofs("dump\\README.md");
+#else
+		std::ofstream ofs("dump_staging\\README.md");
+#endif
 		ofs << readme;
 		ofs.close();
 		return;

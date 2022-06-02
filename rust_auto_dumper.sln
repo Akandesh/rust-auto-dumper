@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.757
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32414.318
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rust_auto_dumper", "rust_auto_dumper\rust_auto_dumper.vcxproj", "{A894DEF1-1568-424D-B969-D56CB1DBFB00}"
 EndProject
@@ -9,6 +9,8 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Relase_Staging|x64 = Relase_Staging|x64
+		Relase_Staging|x86 = Relase_Staging|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
@@ -17,6 +19,10 @@ Global
 		{A894DEF1-1568-424D-B969-D56CB1DBFB00}.Debug|x64.Build.0 = Debug|x64
 		{A894DEF1-1568-424D-B969-D56CB1DBFB00}.Debug|x86.ActiveCfg = Debug|Win32
 		{A894DEF1-1568-424D-B969-D56CB1DBFB00}.Debug|x86.Build.0 = Debug|Win32
+		{A894DEF1-1568-424D-B969-D56CB1DBFB00}.Relase_Staging|x64.ActiveCfg = Relase_Staging|x64
+		{A894DEF1-1568-424D-B969-D56CB1DBFB00}.Relase_Staging|x64.Build.0 = Relase_Staging|x64
+		{A894DEF1-1568-424D-B969-D56CB1DBFB00}.Relase_Staging|x86.ActiveCfg = Relase_Staging|Win32
+		{A894DEF1-1568-424D-B969-D56CB1DBFB00}.Relase_Staging|x86.Build.0 = Relase_Staging|Win32
 		{A894DEF1-1568-424D-B969-D56CB1DBFB00}.Release|x64.ActiveCfg = Release|x64
 		{A894DEF1-1568-424D-B969-D56CB1DBFB00}.Release|x64.Build.0 = Release|x64
 		{A894DEF1-1568-424D-B969-D56CB1DBFB00}.Release|x86.ActiveCfg = Release|Win32

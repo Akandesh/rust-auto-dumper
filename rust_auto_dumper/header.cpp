@@ -4,9 +4,17 @@
 void header::dump(std::vector<offset_parent_t>& data, std::unordered_map<std::string, std::string>& scriptoff)
 {
 	if (inlinex)
+#ifndef STAGING
 		stream = std::ofstream("dump\\rust_inline.h");
-	else 
+#else
+		stream = std::ofstream("dump_staging\\rust_inline.h");
+#endif
+	else
+#ifndef STAGING
 		stream = std::ofstream("dump\\rust.h");
+#else
+		stream = std::ofstream("dump_staging\\rust.h");
+#endif
 	this->dheader();
 	stream << "namespace blazedumper {" << std::endl;
 	this->timestamp();

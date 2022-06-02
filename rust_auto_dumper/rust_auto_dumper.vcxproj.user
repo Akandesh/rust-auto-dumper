@@ -8,6 +8,10 @@
     <LocalDebuggerWorkingDirectory>D:\!steamplay\</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Relase_Staging|Win32'">
+    <LocalDebuggerWorkingDirectory>D:\!steamplay\</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
   <PropertyGroup>
     <ShowAllFiles>true</ShowAllFiles>
   </PropertyGroup>

@@ -4,7 +4,11 @@
 
 void csharp::dump(std::vector<offset_parent_t>& data, std::unordered_map<std::string, std::string>& scriptoff)
 {
+#ifndef STAGING
 	stream = std::ofstream("dump\\rust.cs");
+#else
+	stream = std::ofstream("dump_staging\\rust.cs");
+#endif
 	this->header();
 	stream << "namespace blazedumper {" << std::endl;
 	this->timestamp();
