@@ -257,6 +257,7 @@ void update_readme() {
 	offset_parent_t ModelState_offsets = { "ModelState" };
 	offset_parent_t Item_offsets = { "Item" };
 	offset_parent_t Model_offsets = { "Model" };
+	offset_parent_t RecoilProperties_offsets = { "RecoilProperties" };
 
 	// fetching values we're interested in
 	if (true) {
@@ -342,10 +343,13 @@ void update_readme() {
 	// Model
 	basic_scan("public class Model : MonoBehaviour, IPrefabPreProcess", dumpData, Model_offsets);
 
+	// RecoilProperties
+	basic_scan("public class RecoilProperties : ScriptableObject", dumpData, RecoilProperties_offsets);
+
 
 	std::vector<offset_parent_t> final_offsets = { baseplayer_offsets , baseentity_offsets, BaseCombatEntity_offsets,
 		BuildingPrivlidge_offsets, BaseProjectile_offsets, Magazine_offsets, PlayerInventory_offsets,
-	ItemContainer_offsets , PlayerModel_offsets , ModelState_offsets , Item_offsets ,Model_offsets };
+	ItemContainer_offsets , PlayerModel_offsets , ModelState_offsets , Item_offsets ,Model_offsets, RecoilProperties_offsets };
 
 	// create json file
 	json baseplayer_j;
@@ -396,6 +400,10 @@ void update_readme() {
 	for (auto& k : Model_offsets.offsets)
 		Model_j[k.name] = k.offset;
 
+	json Recooil_j;
+	for (auto& k : RecoilProperties_offsets.offsets)
+		Recooil_j[k.name] = k.offset;
+
 
 	json final_j;
 	for (auto& x : script_offsets) {
@@ -417,6 +425,7 @@ void update_readme() {
 	final_j["Item"] = Item_j;
 	final_j["Model"] = Model_j;
 	final_j["BaseProjectile"] = Baseprojectile_j;
+	final_j["RecoilProperties"] = Recooil_j;
 
 #ifndef STAGING
 	std::ofstream o("dump\\rust.json");
