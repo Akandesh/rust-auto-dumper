@@ -243,9 +243,10 @@ void update_readme() {
 	std::unordered_map<std::string, std::string> script_offsets = {
 		{"BaseEntity_TypeInfo", ""},
 		{"MainCamera_TypeInfo", ""},
-		{"Facepunch.Input_TypeInfo", ""}
+		{"Facepunch.Input_TypeInfo", ""},
+		{"System.Collections.Generic.List<BaseGameMode>_TypeInfo", ""}
 	}; // default values used for script.json
-	offset_parent_t baseplayer_offsets = {"BasePlayer"};
+	offset_parent_t baseplayer_offsets = { "BasePlayer" };
 	offset_parent_t baseentity_offsets = { "BaseEntity" };
 	offset_parent_t BaseCombatEntity_offsets = { "BaseCombatEntity" };
 	offset_parent_t BuildingPrivlidge_offsets = { "BuildingPrivlidge" };
@@ -406,10 +407,13 @@ void update_readme() {
 
 
 	json final_j;
+	std::unordered_map<std::string, std::string> fixed_script_offsets = { };
 	for (auto& x : script_offsets) {
-		assert(x.second.size());
 		std::string n = x.first;
 		std::replace(n.begin(), n.end(), '.', '_'); // replacing . with _
+		std::replace(n.begin(), n.end(), '<', '_'); // replacing < with _
+		n.erase(std::remove(n.begin(), n.end(), '>')); // removing >
+		fixed_script_offsets.insert({ n, x.second });
 		final_j[n] = std::atoi(x.second.c_str());
 	}
 
@@ -435,9 +439,9 @@ void update_readme() {
 	o << std::setw(4) << final_j << std::endl;
 
 	// create header file
-	header(false).dump(final_offsets, script_offsets);
-	header(true).dump(final_offsets, script_offsets);
-	csharp().dump(final_offsets, script_offsets);
+	header(false).dump(final_offsets, fixed_script_offsets);
+	header(true).dump(final_offsets, fixed_script_offsets);
+	csharp().dump(final_offsets, fixed_script_offsets);
 
 	// modifying README
 #ifndef STAGING
