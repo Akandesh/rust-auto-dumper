@@ -203,10 +203,10 @@ std::vector<std::string> splitbyline(std::string& sentence) {
 
 void basic_scan(std::string classname, std::string& dumpData, offset_parent_t& out) {
 	static std::regex regex1(R"((public|private|protected|internal)\s(\w+\.?\w*\.?\w*)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+)?)"); // works on 90%
-	static std::regex regex2(R"((public|private|protected|internal)\s(\w+)\s<(\w+)>.*?;\s\/\/\s(0x[0-9a-fA-F]+))"); // works on stuff like Vector<int>
+	static std::regex regex2(R"((public|private|protected|internal)\s(\w+\.?\w.*)\s<(\w+)>.*?;\s\/\/\s(0x[0-9a-fA-F]+))"); // works on stuff like Vector<int> and thing.thing<thing>
 	static std::regex regexList(R"((public|private|protected|internal)\s(List<.*?>)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+))"); // only works on real List, append list to name
 	static std::regex regexArray(R"((public|private|protected|internal)\s(\w+\[\])\s(.*?);\s\/\/\s(0x[0-9a-fA-F]+))"); // only works on arrays
-
+	static std::regex regexEntityRef(R"((public|private|protected|internal)\s(EntityRef<\w+>)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+)?)"); // only works on entityrefs
 
 	// 1. go to start of class
 	// 2. shorten data by finding the next class then substr that index
@@ -231,6 +231,9 @@ void basic_scan(std::string classname, std::string& dumpData, offset_parent_t& o
 			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str() + (add ? "List" : ""), std::stoul(results[4].str(), nullptr, 16) /* need to convert offset to number */ });
 		}
 		else if (std::regex_search(line, results, regexArray)) {
+			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), std::stoul(results[4].str(), nullptr, 16) /* need to convert offset to number */ });
+		}
+		else if (std::regex_search(line, results, regexEntityRef)) {
 			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), std::stoul(results[4].str(), nullptr, 16) /* need to convert offset to number */ });
 		}
 	}
@@ -260,6 +263,8 @@ void update_readme() {
 	offset_parent_t Item_offsets = { "Item" };
 	offset_parent_t Model_offsets = { "Model" };
 	offset_parent_t RecoilProperties_offsets = { "RecoilProperties" };
+	offset_parent_t BaseFishingRod_offsets = { "BaseFishingRod" };
+	offset_parent_t FishingBobber_offsets = { "FishingBobber" };
 
 	// fetching values we're interested in
 	if (true) {
@@ -348,10 +353,17 @@ void update_readme() {
 	// RecoilProperties
 	basic_scan("public class RecoilProperties : ScriptableObject", dumpData, RecoilProperties_offsets);
 
+	// BaseFishingRod
+	basic_scan("public class BaseFishingRod : HeldEntity", dumpData, BaseFishingRod_offsets);
+
+	// FishingBobber
+	basic_scan("public class FishingBobber : BaseCombatEntity", dumpData, FishingBobber_offsets);
+
 
 	std::vector<offset_parent_t> final_offsets = { baseplayer_offsets , baseentity_offsets, BaseCombatEntity_offsets,
 		BuildingPrivlidge_offsets, BaseProjectile_offsets, Magazine_offsets, PlayerInventory_offsets,
-	ItemContainer_offsets , PlayerModel_offsets , ModelState_offsets , Item_offsets ,Model_offsets, RecoilProperties_offsets };
+	ItemContainer_offsets , PlayerModel_offsets , ModelState_offsets , Item_offsets ,Model_offsets, RecoilProperties_offsets, BaseFishingRod_offsets,
+	FishingBobber_offsets };
 
 	// create json file
 	json baseplayer_j;
@@ -406,6 +418,14 @@ void update_readme() {
 	for (auto& k : RecoilProperties_offsets.offsets)
 		Recooil_j[k.name] = k.offset;
 
+	json BaseFishingRod_j;
+	for (auto& k : BaseFishingRod_offsets.offsets)
+		BaseFishingRod_j[k.name] = k.offset;
+
+	json FishingBobber_j;
+	for (auto& k : FishingBobber_offsets.offsets)
+		FishingBobber_j[k.name] = k.offset;
+
 
 	json final_j;
 	std::unordered_map<std::string, std::string> fixed_script_offsets = { };
@@ -432,6 +452,8 @@ void update_readme() {
 	final_j["Model"] = Model_j;
 	final_j["BaseProjectile"] = Baseprojectile_j;
 	final_j["RecoilProperties"] = Recooil_j;
+	final_j["BaseFishingRod"] = BaseFishingRod_j;
+	final_j["FishingBobber"] = FishingBobber_j;
 
 #ifndef STAGING
 	std::ofstream o("dump\\rust.json");
