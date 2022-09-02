@@ -244,7 +244,8 @@ void update_readme() {
 		{"BaseEntity_TypeInfo", ""},
 		{"MainCamera_TypeInfo", ""},
 		{"Facepunch.Input_TypeInfo", ""},
-		{"System.Collections.Generic.List<BaseGameMode>_TypeInfo", ""}
+		{"System.Collections.Generic.List<BaseGameMode>_TypeInfo", ""},
+		{"BaseGameMode_TypeInfo", ""}
 	}; // default values used for script.json
 	offset_parent_t baseplayer_offsets = { "BasePlayer" };
 	offset_parent_t baseentity_offsets = { "BaseEntity" };
@@ -409,6 +410,7 @@ void update_readme() {
 	json final_j;
 	std::unordered_map<std::string, std::string> fixed_script_offsets = { };
 	for (auto& x : script_offsets) {
+		assert(x.second.size());
 		std::string n = x.first;
 		std::replace(n.begin(), n.end(), '.', '_'); // replacing . with _
 		std::replace(n.begin(), n.end(), '<', '_'); // replacing < with _
