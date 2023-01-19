@@ -306,14 +306,45 @@ void update_readme() {
 	std::string dumpData = slurp(dump);
 
 	// getting rid of excess data
-	auto t = dumpData.find("public class ModelState : IDisposable, Pool.IPooled, IProto");
-	assert(t != std::string::npos);
+	auto t = dumpData.find("public class BaseCombatEntity : BaseEntity");
 	if (t == std::string::npos) {
 		console::print_failure(true, "Failed to find excess splitter");
+		assert(t != std::string::npos);
 		return;
 	}
-	dumpData = dumpData.substr(t - 30);
+#ifdef _DEBUG
+	std::list<std::string> all_classes = {
+	"public class BasePlayer : BaseCombatEntity, LootPanel.IHasLootPanel",
+	"public class BaseEntity : BaseNetworkable, IProvider",
+	"public class BaseCombatEntity : BaseEntity",
+	"public class BuildingPrivlidge : StorageContainer",
+	"public class BaseProjectile : AttackEntity",
+	"public class BaseProjectile.Magazine",
+	"public class PlayerInventory : EntityComponent<BasePlayer>",
+	"public sealed class ItemContainer",
+	"public class PlayerModel : ListComponent<PlayerModel>, IOnParentDestroying",
+	"public class ModelState : IDisposable, Pool.IPooled, IProto",
+	"public class Item //",
+	"public class Model : MonoBehaviour, IPrefabPreProcess",
+	"public class RecoilProperties : ScriptableObject",
+	"public class BaseFishingRod : HeldEntity",
+	"public class FishingBobber : BaseCombatEntity"
+	};
 
+	std::string first_class = "";
+	for (auto& klass : all_classes) {
+		static size_t lowest_idx = INT_MAX;
+		size_t index = dumpData.find(klass);
+		if (index < lowest_idx) {
+			lowest_idx = index;
+			first_class = klass;
+		}
+	}
+
+	printf("Best class is %s\n", first_class.c_str());
+#endif
+	dumpData = dumpData.substr(t - 30);
+	
 	// BasePlayer
 	basic_scan("public class BasePlayer : BaseCombatEntity, LootPanel.IHasLootPanel", dumpData, baseplayer_offsets);
 
@@ -495,5 +526,5 @@ void update_readme() {
 		command.append(replaceexp + "/g' 'C:\\Users\\Administrator\\Desktop\\BlazeDumpRust\\dump\\README.md'");
 		system(command.c_str());
 	}
-}
+	}
 
