@@ -98,14 +98,14 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\admin\OneDrive\!codin\CPP\!libs\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Akand\OneDrive\!codin\CPP\!libs\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Relase_Staging|x64'">
-    <IncludePath>C:\Users\admin\OneDrive\!codin\CPP\!libs\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Akand\OneDrive\!codin\CPP\!libs\include;$(IncludePath)</IncludePath>
     <TargetName>$(ProjectName)_staging</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\admin\OneDrive\!codin\CPP\!libs\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Akand\OneDrive\!codin\CPP\!libs\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

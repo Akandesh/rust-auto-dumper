@@ -23,18 +23,28 @@
 void update_readme();
 void update_check();
 void dump_to_github();
+std::string get_current_time();
 
+int current_log = 0;
+std::ofstream log_stream;
+std::ofstream update_log_stream;
 
-
-std::string exec(const char* cmd) {
+std::string exec(const char* cmd, std::ofstream* log_stream = nullptr) {
 	std::array<char, 128> buffer;
 	std::string result;
 	std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
 	if (!pipe) {
 		throw std::runtime_error("popen() failed!");
 	}
+	std::string time = get_current_time();
 	while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-		result += buffer.data();
+		std::string data = buffer.data();
+		result += data;
+		if (log_stream != nullptr && log_stream->good() && log_stream->is_open())
+			*log_stream << "[" << time << "] " << data;
+	}
+	if (log_stream != nullptr && log_stream->good() && log_stream->is_open()) {
+		log_stream->close();
 	}
 	return result;
 }
@@ -44,6 +54,7 @@ std::string local_build;
 bool updated = false;
 
 bool update() {
+	console::set_title_message("Updating..");
 	try {
 		console::print_success(true, "Update available");
 		console::print(normal, "Local build: ", false);
@@ -51,9 +62,21 @@ bool update() {
 		console::print(normal, "Remote build: ", false);
 		console::heck(success, remote_build.c_str());
 #ifndef STAGING
-		auto response = exec("update_rust.bat");
+		std::filesystem::path f{ std::string("logs/live_log") + std::to_string(current_log) + std::string(".log") };
+		log_stream = std::ofstream(f, std::ofstream::trunc);
+		current_log++;
+		if (current_log >= 20) {
+			current_log = 0;
+		}
+		auto response = exec("update_rust.bat", &log_stream);
 #else
-		auto response = exec("update_rust-staging.bat");
+		std::filesystem::path f{ std::string("logs/staging_log") + std::to_string(current_log) + std::string(".log") };
+		log_stream = std::ofstream(f, std::ofstream::trunc);
+		current_log++;
+		if (current_log >= 20) {
+			current_log = 0;
+		}
+		auto response = exec("update_rust-staging.bat", &log_stream);
 #endif
 		if (response.find("Success!") != std::string::npos) {
 			updated = true;
@@ -77,18 +100,29 @@ bool update() {
 		return updated;
 	}
 	catch (std::exception& e) {
+		console::set_title_message("Update failed..");
 		console::print_failure(true, "Update failed: %s", e.what());
 		return false;
 	}
 }
 
 void update_check() {
-
+	console::set_title_message("Checking for update..");
 	try {
 		static std::regex regexp(R"(^\s\s\s\"public\"\s+\{\s+\"buildid\"\s+\"(\d+)\")");
 #ifndef STAGING
-		auto output = exec("checkver.bat");
+		std::filesystem::path f{ "logs/update_check.log" };
+		if (exists(f)) {
+			std::filesystem::copy(f, "logs/update_check2.log", std::filesystem::copy_options::overwrite_existing);
+		}
+		update_log_stream = std::ofstream(f, std::ofstream::trunc);
+		auto output = exec("checkver.bat", &update_log_stream);
 #else
+		std::filesystem::path f{ "logs/update_check_staging.log" };
+		if (exists(f)) {
+			std::filesystem::copy(f, "logs/update_check_staging2.log", std::filesystem::copy_options::overwrite_existing);
+		}
+		update_log_stream = std::ofstream(f, std::ofstream::trunc);
 		auto output = exec("checkver-staging.bat");
 #endif
 
@@ -154,6 +188,7 @@ int main() {
 }
 
 void dump_to_github() {
+	console::set_title_message("Dumping..");
 #ifndef STAGING
 	auto output = exec("dump.bat");
 #else
@@ -161,6 +196,7 @@ void dump_to_github() {
 #endif
 	if (output.find("Done!") != std::string::npos) {
 		update_readme();
+		console::set_title_message("Sending to github..");
 #ifndef STAGING
 		exec("script.sh");
 #else
@@ -243,6 +279,7 @@ void basic_scan(std::string classname, std::string& dumpData, offset_parent_t& o
 
 using namespace nlohmann;
 void update_readme() {
+	console::set_title_message("Parsing dump..");
 	std::unordered_map<std::string, std::string> script_offsets = {
 		{"BaseEntity_TypeInfo", ""},
 		{"MainCamera_TypeInfo", ""},
@@ -265,6 +302,9 @@ void update_readme() {
 	offset_parent_t RecoilProperties_offsets = { "RecoilProperties" };
 	offset_parent_t BaseFishingRod_offsets = { "BaseFishingRod" };
 	offset_parent_t FishingBobber_offsets = { "FishingBobber" };
+	offset_parent_t OcclusionCulling_offsets = { "OcclusionCulling" };
+	offset_parent_t OcclusionCulling_DebugSettings_offsets = { "OcclusionCulling_DebugSettings" };
+
 
 	// fetching values we're interested in
 	if (true) {
@@ -328,7 +368,9 @@ void update_readme() {
 	"public class Model : MonoBehaviour, IPrefabPreProcess",
 	"public class RecoilProperties : ScriptableObject",
 	"public class BaseFishingRod : HeldEntity",
-	"public class FishingBobber : BaseCombatEntity"
+	"public class FishingBobber : BaseCombatEntity",
+	"public class OcclusionCulling : MonoBehaviour",
+	"public class OcclusionCulling.DebugSettings"
 	};
 
 	std::string first_class = "";
@@ -344,7 +386,7 @@ void update_readme() {
 	printf("Best class is %s\n", first_class.c_str());
 #endif
 	dumpData = dumpData.substr(t - 30);
-	
+
 	// BasePlayer
 	basic_scan("public class BasePlayer : BaseCombatEntity, LootPanel.IHasLootPanel", dumpData, baseplayer_offsets);
 
@@ -390,11 +432,17 @@ void update_readme() {
 	// FishingBobber
 	basic_scan("public class FishingBobber : BaseCombatEntity", dumpData, FishingBobber_offsets);
 
+	// OcclusionCulling
+	basic_scan("public class OcclusionCulling : MonoBehaviour", dumpData, OcclusionCulling_offsets);
+
+	// OcclusionCulling.DebugSettings
+	basic_scan("public class OcclusionCulling.DebugSettings", dumpData, OcclusionCulling_DebugSettings_offsets);
+
 
 	std::vector<offset_parent_t> final_offsets = { baseplayer_offsets , baseentity_offsets, BaseCombatEntity_offsets,
 		BuildingPrivlidge_offsets, BaseProjectile_offsets, Magazine_offsets, PlayerInventory_offsets,
 	ItemContainer_offsets , PlayerModel_offsets , ModelState_offsets , Item_offsets ,Model_offsets, RecoilProperties_offsets, BaseFishingRod_offsets,
-	FishingBobber_offsets };
+	FishingBobber_offsets, OcclusionCulling_offsets, OcclusionCulling_DebugSettings_offsets };
 
 	// create json file
 	json baseplayer_j;
@@ -457,6 +505,13 @@ void update_readme() {
 	for (auto& k : FishingBobber_offsets.offsets)
 		FishingBobber_j[k.name] = k.offset;
 
+	json OcclusionCulling_j;
+	for (auto& k : OcclusionCulling_offsets.offsets)
+		OcclusionCulling_j[k.name] = k.offset;
+
+	json OcclusionCulling_DebugSettings_j;
+	for (auto& k : OcclusionCulling_DebugSettings_offsets.offsets)
+		OcclusionCulling_DebugSettings_j[k.name] = k.offset;
 
 	json final_j;
 	std::unordered_map<std::string, std::string> fixed_script_offsets = { };
@@ -485,6 +540,8 @@ void update_readme() {
 	final_j["RecoilProperties"] = Recooil_j;
 	final_j["BaseFishingRod"] = BaseFishingRod_j;
 	final_j["FishingBobber"] = FishingBobber_j;
+	final_j["OcclusionCulling"] = OcclusionCulling_j;
+	final_j["OcclusionCulling.DebugSettings"] = OcclusionCulling_DebugSettings_j;
 
 #ifndef STAGING
 	std::ofstream o("dump\\rust.json");
@@ -526,5 +583,5 @@ void update_readme() {
 		command.append(replaceexp + "/g' 'C:\\Users\\Administrator\\Desktop\\BlazeDumpRust\\dump\\README.md'");
 		system(command.c_str());
 	}
-	}
+}
 
