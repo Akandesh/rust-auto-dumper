@@ -202,6 +202,7 @@ void dump_to_github() {
 #else
 		exec("script-staging.sh");
 #endif
+		console::set_title_message("All done!");
 	}
 	else {
 		console::print_failure(true, "Dumping failed! %s", output.c_str());
@@ -237,12 +238,13 @@ std::vector<std::string> splitbyline(std::string& sentence) {
 	return lines;
 }
 
-void basic_scan(std::string classname, std::string& dumpData, offset_parent_t& out) {
+void basic_scan(std::string classname, std::string& dumpData, offset_parent_t& out, bool static_members = false) {
 	static std::regex regex1(R"((public|private|protected|internal)\s(\w+\.?\w*\.?\w*)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+)?)"); // works on 90%
 	static std::regex regex2(R"((public|private|protected|internal)\s(\w+\.?\w.*)\s<(\w+)>.*?;\s\/\/\s(0x[0-9a-fA-F]+))"); // works on stuff like Vector<int> and thing.thing<thing>
 	static std::regex regexList(R"((public|private|protected|internal)\s(List<.*?>)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+))"); // only works on real List, append list to name
 	static std::regex regexArray(R"((public|private|protected|internal)\s(\w+\[\])\s(.*?);\s\/\/\s(0x[0-9a-fA-F]+))"); // only works on arrays
 	static std::regex regexEntityRef(R"((public|private|protected|internal)\s(EntityRef<\w+>)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+)?)"); // only works on entityrefs
+	static std::regex regexStatic(R"((public|private|protected|internal)\sstatic\s(\w+\.?\w*\.?\w*)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+)?)");
 
 	// 1. go to start of class
 	// 2. shorten data by finding the next class then substr that index
@@ -271,6 +273,9 @@ void basic_scan(std::string classname, std::string& dumpData, offset_parent_t& o
 		}
 		else if (std::regex_search(line, results, regexEntityRef)) {
 			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), std::stoul(results[4].str(), nullptr, 16) /* need to convert offset to number */ });
+		}
+		else if (static_members && std::regex_search(line, results, regexStatic)) {
+			out.offsets.emplace_back(offset_entry_t{ results[2].str(), std::string("static_") + results[3].str(), std::stoul(results[4].str(), nullptr, 16) /* need to convert offset to number */});
 		}
 	}
 	if (out.offsets.empty())
@@ -433,7 +438,7 @@ void update_readme() {
 	basic_scan("public class FishingBobber : BaseCombatEntity", dumpData, FishingBobber_offsets);
 
 	// OcclusionCulling
-	basic_scan("public class OcclusionCulling : MonoBehaviour", dumpData, OcclusionCulling_offsets);
+	basic_scan("public class OcclusionCulling : MonoBehaviour", dumpData, OcclusionCulling_offsets, true);
 
 	// OcclusionCulling.DebugSettings
 	basic_scan("public class OcclusionCulling.DebugSettings", dumpData, OcclusionCulling_DebugSettings_offsets);
