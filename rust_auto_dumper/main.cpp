@@ -258,24 +258,25 @@ void basic_scan(std::string classname, std::string& dumpData, offset_parent_t& o
 
 	for (auto& line : splitbyline(clazz)) {
 		std::smatch results;
+		unsigned long offset_num = std::stoul(results[4].str(), nullptr, 16); /* need to convert offset to number */
 		if (std::regex_search(line, results, regex1)) {
-			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), std::stoul(results[4].str(), nullptr, 16) /* need to convert offset to number */ });
+			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), offset_num });
 		}
 		else if (std::regex_search(line, results, regex2)) {
-			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), std::stoul(results[4].str(), nullptr, 16) /* need to convert offset to number */ });
+			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), offset_num });
 		}
 		else if (std::regex_search(line, results, regexList)) {
 			bool add = results[2].str().find("List") == std::string::npos;
-			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str() + (add ? "List" : ""), std::stoul(results[4].str(), nullptr, 16) /* need to convert offset to number */ });
+			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str() + (add ? "List" : ""), offset_num });
 		}
 		else if (std::regex_search(line, results, regexArray)) {
-			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), std::stoul(results[4].str(), nullptr, 16) /* need to convert offset to number */ });
+			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), offset_num });
 		}
 		else if (std::regex_search(line, results, regexEntityRef)) {
-			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), std::stoul(results[4].str(), nullptr, 16) /* need to convert offset to number */ });
+			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), offset_num });
 		}
 		else if (static_members && std::regex_search(line, results, regexStatic)) {
-			out.offsets.emplace_back(offset_entry_t{ results[2].str(), std::string("static_") + results[3].str(), std::stoul(results[4].str(), nullptr, 16) /* need to convert offset to number */});
+			out.offsets.emplace_back(offset_entry_t{ results[2].str(), std::string("static_") + results[3].str(), offset_num });
 		}
 	}
 	if (out.offsets.empty())
@@ -588,5 +589,5 @@ void update_readme() {
 		command.append(replaceexp + "/g' 'C:\\Users\\Administrator\\Desktop\\BlazeDumpRust\\dump\\README.md'");
 		system(command.c_str());
 	}
-}
+	}
 
