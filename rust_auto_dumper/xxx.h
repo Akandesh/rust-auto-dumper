@@ -13,3 +13,9 @@ struct offset_parent_t {
 	std::string name;
 	std::vector<offset_entry_t> offsets;
 };
+
+struct class_dump {
+	std::string name;
+	std::string scan;
+	bool static_members = false;
+};

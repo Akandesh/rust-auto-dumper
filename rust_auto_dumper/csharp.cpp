@@ -17,7 +17,7 @@ void csharp::dump(std::vector<offset_parent_t>& data, std::unordered_map<std::st
 		std::string n = i.first;
 		std::replace(n.begin(), n.end(), '.', '_');
 		stream << "    public static class " << n << std::endl << "    {" << std::endl;
-		stream << "    public const Int32 " << "offset" << " = 0x" << std::hex << std::uppercase << std::atoi(i.second.c_str()) << ";" << std::endl;
+		stream << "        public const Int32 " << "offset" << " = 0x" << std::hex << std::uppercase << std::atoi(i.second.c_str()) << ";" << std::endl;
 		stream << "    }" << std::endl;
 	}
 	for (auto& item : data) {
