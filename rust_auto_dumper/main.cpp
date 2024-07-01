@@ -307,7 +307,7 @@ void ReplaceStringInPlace(std::string& subject, const std::string& search,
 	}
 }
 using namespace nlohmann;
-offset_parent_t add_class_dump(std::string name, std::string dump_string, std::string& dump_data, json& json_out, bool static_members = false) {
+offset_parent_t add_class_dump(std::string name, std::string dump_string, std::string& dump_data, json& json_out, bool static_members) {
 	offset_parent_t offsets = { name };
 	basic_scan(dump_string, dump_data, offsets, static_members);
 
@@ -333,7 +333,8 @@ void update_readme() {
 		{"BasePlayer_TypeInfo", ""},
 		{"ConVar.Graphics_TypeInfo", ""},
 		{"OcclusionCulling_TypeInfo", ""},
-		{"BaseNetworkable_TypeInfo", ""}
+		{"BaseNetworkable_TypeInfo", ""},
+		{"ConsoleSystem.Index_TypeInfo", ""}
 	}; // default values used for script.json
 
 
@@ -358,7 +359,8 @@ void update_readme() {
 		{"PlayerInput", "public class PlayerInput : EntityComponent<BasePlayer>"},
 		{"ItemDefinition", "public class ItemDefinition : MonoBehaviour"},
 		{"PlayerEyes", "public class PlayerEyes : EntityComponent<BasePlayer>"},
-		{"Projectile", "public class Projectile : BaseMonoBehaviour"}
+		{"Projectile", "public class Projectile : BaseMonoBehaviour"},
+		{"ItemModProjectile", "public class ItemModProjectile : MonoBehaviour"}
 	};
 
 	// fetching values we're interested in
@@ -442,7 +444,7 @@ void update_readme() {
 
 	std::vector<offset_parent_t> final_offsets;
 	for (auto& klass : classes) {
-		final_offsets.emplace_back(add_class_dump(klass.name, klass.scan, dumpData, final_j));
+		final_offsets.emplace_back(add_class_dump(klass.name, klass.scan, dumpData, final_j, klass.static_members));
 	}
 
 
