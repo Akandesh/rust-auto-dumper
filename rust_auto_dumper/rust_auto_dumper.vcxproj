@@ -101,7 +101,7 @@
     <IncludePath>C:\Users\Administrator\OneDrive\!codin\CPP\!libs\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Relase_Staging|x64'">
-    <IncludePath>C:\Users\Akand\OneDrive\!codin\CPP\!libs\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Administrator\OneDrive\!codin\CPP\!libs\include;$(IncludePath)</IncludePath>
     <TargetName>$(ProjectName)_staging</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -199,12 +199,14 @@
   <ItemGroup>
     <ClCompile Include="csharp.cpp" />
     <ClCompile Include="header.cpp" />
+    <ClCompile Include="header_enc.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="console.hpp" />
     <ClInclude Include="csharp.h" />
     <ClInclude Include="header.h" />
+    <ClInclude Include="header_enc.h" />
     <ClInclude Include="xxx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

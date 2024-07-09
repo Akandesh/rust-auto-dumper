@@ -4,11 +4,13 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="header.cpp" />
     <ClCompile Include="csharp.cpp" />
+    <ClCompile Include="header_enc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="console.hpp" />
     <ClInclude Include="header.h" />
     <ClInclude Include="csharp.h" />
     <ClInclude Include="xxx.h" />
+    <ClInclude Include="header_enc.h" />
   </ItemGroup>
 </Project>

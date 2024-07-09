@@ -17,6 +17,7 @@
 #include "xxx.h"
 #include "console.hpp"
 #include "header.h"
+#include "header_enc.h"
 #include "csharp.h"
 
 
@@ -157,7 +158,9 @@ void update_check() {
 	}
 }
 
+
 int main() {
+	
 #ifdef _DEBUG
 	update_readme();
 	return 0;
@@ -242,12 +245,13 @@ std::vector<std::string> splitbyline(std::string& sentence) {
 }
 
 void basic_scan(std::string classname, std::string& dumpData, offset_parent_t& out, bool static_members = false) {
-	static std::regex regex1(R"((public|private|protected|internal)\s(\w+\.?\w*\.?\w*)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+)?)"); // works on 90%
-	static std::regex regex2(R"((public|private|protected|internal)\s(\w+\.?\w.*)\s<(\w+)>.*?;\s\/\/\s(0x[0-9a-fA-F]+))"); // works on stuff like Vector<int> and thing.thing<thing>
-	static std::regex regexList(R"((public|private|protected|internal)\s(List<.*?>)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+))"); // only works on real List, append list to name
-	static std::regex regexArray(R"((public|private|protected|internal)\s(\w+\[\])\s(.*?);\s\/\/\s(0x[0-9a-fA-F]+))"); // only works on arrays
-	static std::regex regexEntityRef(R"((public|private|protected|internal)\s(EntityRef<\w+>)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+)?)"); // only works on entityrefs
-	static std::regex regexStatic(R"((public|private|protected|internal)\sstatic\s(\w+\.?\w*\.?\w*)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+)?)");
+	static std::regex regex1(R"((public|private|protected|internal)\s([%A-Za-z0-9]+\.?[%A-Za-z0-9\*]*?)\s([%A-Za-z0-9]+);\s\/\/\s(0x[0-9a-fA-F]+)?)"); // works on 90%
+	static std::regex regex2(R"((public|private|protected|internal)\s([%A-Za-z0-9+]+\s?<[%A-Za-z0-9]+>)\s?(.*)?;\s\/\/\s(0x[0-9a-fA-F]+))"); // works on stuff like Vector<int> and thing.thing<thing>
+	static std::regex regexList(R"((public|private|protected|internal)\s(List<.*?>)\s([%A-Za-z0-9]+);\s\/\/\s(0x[0-9a-fA-F]+))"); // only works on real List, append list to name
+	static std::regex regexArray(R"((public|private|protected|internal)\s([%A-Za-z0-9]+\[\])\s(.*?);\s\/\/\s(0x[0-9a-fA-F]+))"); // only works on arrays
+	// static std::regex regexEntityRef(R"((public|private|protected|internal)\s(EntityRef<\w+>)\s(\w+);\s\/\/\s(0x[0-9a-fA-F]+)?)"); // only works on entityrefs // REMOVED because hashed now
+	static std::regex regexStatic(R"((public|private|protected|internal)\sstatic\s([%A-Za-z0-9\.]*)\s([%A-Za-z0-9]+);\s\/\/\s(0x[0-9a-fA-F]+)?)");
+	static std::regex regexReadonly(R"((public|private|protected|internal)\sreadonly\s([%A-Za-z0-9]+\.?[%A-Za-z0-9]*?)\s([%A-Za-z0-9]+);\s\/\/\s(0x[0-9a-fA-F]+)?)");
 
 	// 1. go to start of class
 	// 2. shorten data by finding the next class then substr that index
@@ -263,6 +267,11 @@ void basic_scan(std::string classname, std::string& dumpData, offset_parent_t& o
 		std::smatch results;
 		unsigned long offset_num = 0;
 		if (std::regex_search(line, results, regex1)) {
+			/* need to convert offset to number */
+			offset_num = std::stoul(results[4].str(), nullptr, 16);
+			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), offset_num });
+		}
+		else if (std::regex_search(line, results, regexReadonly)) {
 			/* need to convert offset to number */
 			offset_num = std::stoul(results[4].str(), nullptr, 16);
 			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), offset_num });
@@ -283,19 +292,17 @@ void basic_scan(std::string classname, std::string& dumpData, offset_parent_t& o
 			offset_num = std::stoul(results[4].str(), nullptr, 16);
 			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), offset_num });
 		}
-		else if (std::regex_search(line, results, regexEntityRef)) {
-			/* need to convert offset to number */
-			offset_num = std::stoul(results[4].str(), nullptr, 16);
-			out.offsets.emplace_back(offset_entry_t{ results[2].str(), results[3].str(), offset_num });
-		}
 		else if (static_members && std::regex_search(line, results, regexStatic)) {
 			/* need to convert offset to number */
 			offset_num = std::stoul(results[4].str(), nullptr, 16);
 			out.offsets.emplace_back(offset_entry_t{ results[2].str(), std::string("static_") + results[3].str(), offset_num });
 		}
+
 	}
+
 	if (out.offsets.empty())
 		DebugBreak();
+
 }
 
 void ReplaceStringInPlace(std::string& subject, const std::string& search,
@@ -308,12 +315,15 @@ void ReplaceStringInPlace(std::string& subject, const std::string& search,
 }
 using namespace nlohmann;
 offset_parent_t add_class_dump(std::string name, std::string dump_string, std::string& dump_data, json& json_out, bool static_members) {
+	ReplaceStringInPlace(name, "%", "_");
 	offset_parent_t offsets = { name };
 	basic_scan(dump_string, dump_data, offsets, static_members);
 
 	json j;
-	for (auto& k : offsets.offsets)
+	for (auto& k : offsets.offsets) {
+		ReplaceStringInPlace(k.name, "%", "_");
 		j[k.name] = k.offset;
+	}
 
 	json_out[name] = j;
 	return offsets;
@@ -339,17 +349,15 @@ void update_readme() {
 
 
 	std::vector<class_dump> classes = {
-		{"BasePlayer", "public class BasePlayer : BaseCombatEntity, LootPanel.IHasLootPanel"},
-		{"BaseEntity", "public class BaseEntity : BaseNetworkable, IProvider"},
+		{"BasePlayer", "public class BasePlayer : BaseCombatEntity, LootPanel"},
+		{"BaseEntity", "public class BaseEntity : BaseNetworkable"},
 		{"BaseCombatEntity", "public class BaseCombatEntity : BaseEntity"},
 		{"BuildingPrivlidge", "public class BuildingPrivlidge : StorageContainer"},
 		{"BaseProjectile", "public class BaseProjectile : AttackEntity"},
 		{"Magazine", "public class BaseProjectile.Magazine"},
 		{"PlayerInventory", "public class PlayerInventory : EntityComponent<BasePlayer>"},
-		{"ItemContainer", "public sealed class ItemContainer"},
-		{"PlayerModel", "public class PlayerModel : ListComponent<PlayerModel>, IOnParentDestroying"},
+		{"PlayerModel", "public class PlayerModel : ListComponent<PlayerModel>"},
 		{"ModelState", "public class ModelState : IDisposable, Pool.IPooled, IProto"},
-		{"Item", "public class Item //"},
 		{"Model", "public class Model : MonoBehaviour, IPrefabPreProcess"},
 		{"RecoilProperties", "public class RecoilProperties : ScriptableObject"},
 		{"BaseFishingRod", "public class BaseFishingRod : HeldEntity"},
@@ -433,6 +441,10 @@ void update_readme() {
 	json final_j;
 	std::unordered_map<std::string, std::string> fixed_script_offsets = { };
 	for (auto& x : script_offsets) {
+		if (!x.second.size()) {
+			printf("%s missing\n", x.first.c_str());
+			continue;
+		}
 		assert(x.second.size());
 		std::string n = x.first;
 		std::replace(n.begin(), n.end(), '.', '_'); // replacing . with _
@@ -448,6 +460,50 @@ void update_readme() {
 	}
 
 
+	std::vector<std::string> encrypted_classes;
+	size_t last_pos = 0;
+	while ((last_pos = dumpData.find("public struct %", last_pos)) != std::string::npos) {
+		// Find the end of the line
+		size_t end_pos = dumpData.find('\n', last_pos);
+		if (end_pos == std::string::npos) {
+			end_pos = dumpData.length();
+		}
+
+		// Extract the full line
+		std::string line = dumpData.substr(last_pos, end_pos - last_pos);
+		encrypted_classes.push_back(line);
+
+		// Move to the next position
+		last_pos = end_pos + 1;
+	}
+
+	while ((last_pos = dumpData.find("private sealed class %", last_pos)) != std::string::npos) {
+		// Find the end of the line
+		size_t end_pos = dumpData.find('\n', last_pos);
+		if (end_pos == std::string::npos) {
+			end_pos = dumpData.length();
+		}
+
+		// Extract the full line
+		std::string line = dumpData.substr(last_pos, end_pos - last_pos);
+		encrypted_classes.push_back(line);
+
+		// Move to the next position
+		last_pos = end_pos + 1;
+	}
+
+	std::vector<offset_parent_t> encrypted_offsets;
+	std::smatch match;
+
+	json encrypted_json;
+	for (auto& klass : encrypted_classes) {
+		std::regex_search(klass, match, std::regex("(%.*?)\\s"));
+		if (!match.size())
+			DebugBreak();
+		encrypted_offsets.emplace_back(add_class_dump(match[1].str(), klass, dumpData, encrypted_json, true));
+	}
+
+
 #ifndef STAGING
 	std::ofstream o("dump\\rust.json");
 #else
@@ -458,7 +514,9 @@ void update_readme() {
 	// create header file
 	header(false).dump(final_offsets, fixed_script_offsets);
 	header(true).dump(final_offsets, fixed_script_offsets);
+	header_encrypted(true).dump(encrypted_offsets);
 	csharp().dump(final_offsets, fixed_script_offsets);
+	
 
 	// modifying README
 #ifndef STAGING
